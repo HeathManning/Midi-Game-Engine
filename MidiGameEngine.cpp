@@ -1,4 +1,5 @@
 #pragma comment(lib, "winmm.lib") // I have not much idea what this is all about but it works
+//#define __WINDOWS_MM__
 
 #include "MidiGameEngine.h"
 #include "RtMidi.h"
@@ -7,18 +8,23 @@
 #include <chrono>
 #include <thread>
 
-Colour::Colour()
+MidiGameEngine::Colour::Colour()
 {
 	r = 0;
 	g = 0;
 	b = 0;
 }
 
-Colour::Colour(byte red, byte green, byte blue)
+MidiGameEngine::Colour::Colour(byte red, byte green, byte blue)
 {
 	r = red / 2;
 	g = green / 2;
 	b = blue / 2;
+}
+
+MidiGameEngine::Colour MidiGameEngine::Colour::Random()
+{
+	return Colour((byte)rand(), (byte)rand(), (byte)rand());
 }
 
 MidiGameEngine::MidiGameEngine()
@@ -30,7 +36,7 @@ MidiGameEngine::MidiGameEngine()
 	midiin->ignoreTypes(false, false, false);
 
 	grid = new std::vector<Colour>;
-	grid->resize(81);
+	grid->resize(256);
 }
 
 MidiGameEngine::~MidiGameEngine()
@@ -45,19 +51,48 @@ void MidiGameEngine::Run()
 	// TODO: Upgrade device logic to support more devices and hot plugging
 	
 	int ports = midiout->getPortCount();
-	std::string chosenDevice;
-	midiout->openPort(2);
-	chosenDevice = midiout->getPortName(1);
-	if (!(midiout->isPortOpen()))
+	std::string targetDevice("LPMiniMK3");
+	std::string currentDevice;
+	int chosenPort = -1;
+	for (int i = 0; i < ports; i++)
+	{
+		currentDevice = midiout->getPortName(i);
+		std::cout << currentDevice << std::endl;
+		if (currentDevice.find(targetDevice) != std::string::npos)
+		{
+			chosenPort = i;
+		}
+	}
+	if (chosenPort != -1)
+	{
+		midiout->openPort(chosenPort);
+		std::cout << "Connected to: " << midiout->getPortName(chosenPort) << std::endl;
+	}
+	else
 	{
 		return;
 	}
-	
-	std::cout << "Output device: " << chosenDevice << std::endl;
-	
-	midiin->openPort(1);
-	chosenDevice = midiin->getPortName(1);
-	std::cout << "Input device: " << chosenDevice << std::endl;
+
+	ports = midiin->getPortCount();
+	chosenPort = -1;
+	for (int i = 0; i < ports; i++)
+	{
+		currentDevice = midiin->getPortName(i);
+		std::cout << currentDevice << std::endl;
+		if (currentDevice.find(targetDevice) != std::string::npos)
+		{
+			chosenPort = i;
+		}
+	}
+	if (chosenPort != -1)
+	{
+		midiin->openPort(chosenPort);
+		std::cout << "Connected to: " << midiout->getPortName(chosenPort) << std::endl;
+	}
+	else
+	{
+		return;
+	}
 	
 	// set launchpad to programmer mode
 	std::vector<byte> message;
@@ -73,6 +108,8 @@ void MidiGameEngine::Run()
 	message[8] = 0xF7;
 	midiout->sendMessage(&message);
 	std::cout << "Set Launchpad to programmer mode" << std::endl;
+	
+	
 
 
 	// TODO: Upgrade timing logic to make more robust, although not sure what is best practice
@@ -85,7 +122,7 @@ void MidiGameEngine::Run()
 			Update();
 			UpdateGrid();
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(20)); // 50Hz?
+		std::this_thread::sleep_for(std::chrono::milliseconds(20));
 	}
 
 	// set launchpad back to live mode
@@ -94,9 +131,17 @@ void MidiGameEngine::Run()
 	std::cout << "Set Launchpad back to live mode" << std::endl;
 }
 
-int MidiGameEngine::CoordToIndex(int x, int y)
+unsigned int MidiGameEngine::CoordToIndex(int x, int y)
 {
-	return 11;
+	if (x < 0)
+	{
+		x = 9 - (-x % 9);
+	}
+	if (y < 0)
+	{
+		y = 9 - (-y % 9);
+	}
+	return 11 + (x % 9) + 10 * (y % 9);
 }
 
 void MidiGameEngine::SetGridPixel(int x, int y, Colour colour)
@@ -121,8 +166,12 @@ void MidiGameEngine::SendOutput(std::vector<byte>* message)
 
 void MidiGameEngine::UpdateGrid()
 {
+	// TODO: fix this hacky mess
+
+	int foo = 0;
+
 	std::vector<byte> message;
-	message.resize(8 + 5 * (*grid).size());
+	message.resize(8 + 5 * 81);
 	message[0] = 0xF0;
 	message[1] = 0x00;
 	message[2] = 0x20;
@@ -130,17 +179,19 @@ void MidiGameEngine::UpdateGrid()
 	message[4] = 0x02;
 	message[5] = 0x0D;
 	message[6] = 0x03;
-	int l = 11;
-	for (int i = 7; i < message.size(); i += 5)
-	{
-		message[i] = 0x03;
-		message[i + 1] = (byte)(l);
-		message[i + 2] = (*grid)[l].r;
-		message[i + 3] = (*grid)[l].g;
-		message[i + 4] = (*grid)[l].b;
-		l++;
-	}
 	message.back() = 0xF7;
+
+	for (int i = 7; i < 412; i += 5)
+	{
+		byte lightIndex = (byte)CoordToIndex(foo % 9, foo / 9);
+		Colour lightColour = (*grid)[lightIndex];
+		message[i] = 0x03;
+		message[i + 1] = lightIndex;
+		message[i + 2] = lightColour.r;
+		message[i + 3] = lightColour.g;
+		message[i + 4] = lightColour.b;
+		foo++;
+	}
 
 	midiout->sendMessage(&message);
 }

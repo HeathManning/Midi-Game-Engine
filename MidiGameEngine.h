@@ -3,19 +3,25 @@
 
 #pragma once
 
-typedef unsigned char byte;
-struct Colour
-{
-	byte r;
-	byte g;
-	byte b;
-
-	Colour();
-	Colour(byte red, byte green, byte blue);
-};
-
 class MidiGameEngine
 {
+public:
+	typedef unsigned char byte;
+	struct Colour
+	{
+		byte r;
+		byte g;
+		byte b;
+
+		static Colour Random();
+		Colour();
+		Colour(byte red, byte green, byte blue);
+	};
+
+	
+
+
+
 private:
 	RtMidiOut* midiout;
 	RtMidiIn* midiin;
@@ -23,7 +29,7 @@ private:
 	bool isRunning, isPaused;
 	std::vector<Colour>* grid;
 
-	int CoordToIndex(int x, int y);
+	unsigned int CoordToIndex(int x, int y);
 
 	void UpdateGrid();
 
