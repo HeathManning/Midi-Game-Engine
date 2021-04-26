@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="Snake.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MidiGameEngine.cpp">
@@ -24,12 +24,18 @@
     <ClCompile Include="RtMidi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MidiDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MidiGameEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RtMidi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MidiDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

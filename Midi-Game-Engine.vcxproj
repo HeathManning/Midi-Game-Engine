@@ -139,11 +139,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MidiDevice.cpp" />
+    <ClCompile Include="Snake.cpp" />
     <ClCompile Include="MidiGameEngine.cpp" />
     <ClCompile Include="RtMidi.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MidiDevice.h" />
     <ClInclude Include="MidiGameEngine.h" />
     <ClInclude Include="RtMidi.h" />
   </ItemGroup>

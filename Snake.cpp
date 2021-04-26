@@ -2,7 +2,7 @@
 
 #include "MidiGameEngine.h"
 
-class Snake : public MidiGameEngine
+class Snake : public MidiGameEngine // dont know what public does in this situation
 {
     class SnakeGame
     {
